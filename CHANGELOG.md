@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.45.0 (2026-08-01)
+
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Features
+* feat(telephony): capability-token auth for the media WebSocket (#598) by @AManjunath-Voxpro in https://github.com/dograh-hq/dograh/pull/599
+### Bug Fixes
+* fix: combine OSS run authorization requests by @a6kme in https://github.com/dograh-hq/dograh/pull/608
+* fix(telephony): carry the media-WS token in the path, not the query s… by @a6kme in https://github.com/dograh-hq/dograh/pull/610
+
+## New Contributors
+* @AManjunath-Voxpro made their first contribution in https://github.com/dograh-hq/dograh/pull/599
+
+**Full Changelog**: https://github.com/dograh-hq/dograh/compare/dograh-v1.44.0...dograh-v1.45.0
+
 ## 1.44.0 (2026-08-01)
 
 <!-- Release notes generated using configuration in .github/release.yml at main -->
