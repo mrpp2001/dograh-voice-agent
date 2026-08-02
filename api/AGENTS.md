@@ -33,6 +33,10 @@ api/
 | MCP backend surface          | `mcp_server/`                                                                 |
 | Tests                        | `tests/`                                                                      |
 
+These subtrees own their local contracts in their own `AGENTS.md` — read the relevant one
+before editing there: `routes/`, `db/`, `services/workflow/`, `services/pipecat/`,
+`services/telephony/` (and `services/telephony/providers/`), `services/integrations/`.
+
 ## API Structure
 
 - All routes are mounted at `/api/v1` prefix

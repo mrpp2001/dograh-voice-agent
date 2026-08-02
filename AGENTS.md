@@ -15,6 +15,37 @@ dograh/
 ├── docker-compose-local.yaml # Local development services
 ```
 
+## Intent Layer
+
+**Before changing code in a subdirectory, read every `AGENTS.md` on the way down to it.** Parent docs stay navigational; the deepest node owns the local contracts. Don't restate a child's rules in a parent.
+
+| Scope | Node |
+| --- | --- |
+| Backend orientation, org scoping, routes-vs-services | `api/AGENTS.md` |
+| HTTP/WebSocket surface and router aggregation | `api/routes/AGENTS.md` |
+| Data access clients and models | `api/db/AGENTS.md` |
+| Workflow graph, node specs, conversation engine | `api/services/workflow/AGENTS.md` |
+| Live call pipeline and STT/LLM/TTS wiring | `api/services/pipecat/AGENTS.md` |
+| Telephony shared contracts | `api/services/telephony/AGENTS.md` |
+| Telephony provider packages | `api/services/telephony/providers/AGENTS.md` |
+| Integration packages | `api/services/integrations/AGENTS.md` |
+| Frontend orientation, generated client, auth | `ui/AGENTS.md` |
+| App Router pages and Next route handlers | `ui/src/app/AGENTS.md` |
+| Shared React components | `ui/src/components/AGENTS.md` |
+| Local dev and ops scripts | `scripts/AGENTS.md` |
+| Mintlify documentation | `docs/AGENTS.md` |
+
+Not yet covered by a node: `evals/`, `sdk/`, `deploy/`, `examples/`, `api/mcp_server/`, `api/tests/`. Read the code there; don't assume a parent doc describes it.
+
+To audit or extend this hierarchy, use the repo's own skill at `.agents/skills/review-agents-md/`.
+
+### Global Invariants
+
+- **`AGENTS.md` is the single source of truth for agent context.** Every `CLAUDE.md` here is a one-line `@AGENTS.md` import — keep it that way and never duplicate content into it.
+- **Tenant isolation**: every org-scoped read, write, and foreign-key reference filters or validates by `organization_id`. Full rule in `api/AGENTS.md`.
+- **`pipecat/` is a git submodule** kept close to upstream. Dograh-specific behavior belongs in `api/services/pipecat/`, never in the submodule.
+- **`ui/src/client/` is generated** from the backend OpenAPI spec. Never hand-edit; regenerate with `npm run generate-client`.
+
 ## Tech Stack
 
 - **Backend**: Python with FastAPI

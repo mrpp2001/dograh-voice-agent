@@ -32,6 +32,10 @@ ui/
 | Helper functions    | `src/lib/utils.ts`                                   |
 | Global state        | `src/context/` - React context providers             |
 
+`src/app/` and `src/components/` own their local contracts in their own `AGENTS.md` — read
+`src/app/AGENTS.md` before touching pages, providers, or route handlers, and
+`src/components/AGENTS.md` before touching shared components or the workflow-builder renderer.
+
 ## Tech Stack
 
 - Next.js 15 with App Router, React 19, TypeScript
