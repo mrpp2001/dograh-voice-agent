@@ -1,0 +1,29 @@
+# LOCAL-ONLY port remap — not part of the upstream repo, safe to delete.
+#
+# docker-compose-local.yaml hardcodes host ports 5432 / 6379 / 9000 / 9001, but on
+# this machine those are already held by unrelated projects' containers
+# (school-erp-db, pyrexiamed-redis, school-erp-minio). Rather than stopping those,
+# the dev stack publishes on alternate host ports.
+#
+# The `!override` tag replaces the upstream `ports` list instead of appending to it —
+# without it Compose concatenates the two lists and the original conflicting ports
+# would still be published.
+#
+# api/.env and api/.env.test are written to match these ports.
+#
+# Usage:
+#   docker compose -f docker-compose-local.yaml -f docker-compose-local.override.yaml up -d
+
+services:
+  postgres:
+    ports: !override
+      - "127.0.0.1:5433:5432"
+
+  redis:
+    ports: !override
+      - "127.0.0.1:6380:6379"
+
+  minio:
+    ports: !override
+      - "127.0.0.1:9002:9000"
+      - "127.0.0.1:9003:9001"
