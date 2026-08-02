@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="31.0.2">
+  <diagram name="Dograh System Architecture" id="dograh-arch">
+    <mxGraphModel dx="2400" dy="2500" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2480" pageHeight="2520" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="Dograh — Voice AI Platform: System Architecture" style="text;html=1;align=left;verticalAlign=middle;fontSize=26;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="160" y="20" width="1200" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="t1" value="Clients &amp; Telephony Carriers  (external)" style="swimlane;startSize=36;html=1;whiteSpace=wrap;fillColor=#fcfcfc;strokeColor=#9e9e9e;fontStyle=1;fontSize=15;align=left;spacingLeft=16;pointerEvents=0;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="160" y="100" width="2160" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="c_browser" value="&lt;b&gt;Operator Browser&lt;/b&gt;&lt;br&gt;workflow builder · campaigns&lt;br&gt;recordings · reports · settings" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;dashed=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="t1">
+          <mxGeometry x="90" y="54" width="300" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="c_embed" value="&lt;b&gt;Embed / Public Agent Visitor&lt;/b&gt;&lt;br&gt;website widget · text chat&lt;br&gt;browser WebRTC voice session" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;dashed=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="t1">
+          <mxGeometry x="510" y="54" width="320" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="c_pstn" value="&lt;b&gt;PSTN / SIP Caller&lt;/b&gt;&lt;br&gt;inbound and outbound&lt;br&gt;phone conversations" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;dashed=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="t1">
+          <mxGeometry x="950" y="54" width="280" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="c_carrier" value="&lt;b&gt;Telephony Carriers&lt;/b&gt;&lt;br&gt;Twilio · Plivo · Telnyx · Vonage · Cloudonix · Vobiz · Asterisk (ARI)&lt;br&gt;each a self-registering provider package under services/telephony/providers/" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;dashed=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="t1">
+          <mxGeometry x="1350" y="54" width="700" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="t2" value="Edge, Ingress &amp; Auth Boundary" style="swimlane;startSize=36;html=1;whiteSpace=wrap;fillColor=#fcfcfc;strokeColor=#9e9e9e;fontStyle=1;fontSize=15;align=left;spacingLeft=16;pointerEvents=0;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="160" y="290" width="2160" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="e_nginx" value="&lt;b&gt;nginx&lt;/b&gt; &lt;i&gt;(remote profile)&lt;/i&gt;&lt;br&gt;TLS :443 · least_conn LB across&lt;br&gt;FASTAPI_WORKERS uvicorn procs&lt;br&gt;proxies /api/v1 and /voice-audio/" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="t2">
+          <mxGeometry x="90" y="54" width="300" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="e_coturn" value="&lt;b&gt;coturn&lt;/b&gt; &lt;i&gt;(remote / local-turn)&lt;/i&gt;&lt;br&gt;TURN relay for WebRTC NAT traversal&lt;br&gt;time-limited HMAC-SHA1 REST creds&lt;br&gt;issued by /turn_credentials" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="t2">
+          <mxGeometry x="510" y="54" width="320" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="e_tunnel" value="&lt;b&gt;cloudflared&lt;/b&gt; &lt;i&gt;(tunnel profile)&lt;/i&gt;&lt;br&gt;inbound webhook / WSS reachability&lt;br&gt;when the host has no public IP&lt;br&gt;named or quick tunnel" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="t2">
+          <mxGeometry x="950" y="54" width="280" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="e_wsauth" value="&lt;b&gt;Media-WebSocket capability token&lt;/b&gt; — services/telephony/ws_auth.py&lt;br&gt;the carrier dials the media socket back, so its URL is caller-visible: the provider signs it and the handler verifies&lt;br&gt;token travels in the &lt;b&gt;URL path&lt;/b&gt; (never the query string) and stays redacted in logs&lt;br&gt;TELEPHONY_WS_TOKEN_SECRET → log-only · TELEPHONY_WS_TOKEN_ENFORCE=true → reject" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="t2">
+          <mxGeometry x="1350" y="54" width="700" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="t3" value="Frontend — ui/  (Next.js 15 · React 19 · TypeScript · Tailwind + shadcn/ui)" style="swimlane;startSize=36;html=1;whiteSpace=wrap;fillColor=#fcfcfc;strokeColor=#9e9e9e;fontStyle=1;fontSize=15;align=left;spacingLeft=16;pointerEvents=0;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="160" y="540" width="2160" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="f_app" value="&lt;b&gt;App Router&lt;/b&gt; — src/app/&lt;br&gt;SSR + route handlers on :3010&lt;br&gt;overview · campaigns · workflow&lt;br&gt;recordings · reports · usage · settings&lt;br&gt;server calls BACKEND_URL → api:8000" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="t3">
+          <mxGeometry x="90" y="54" width="300" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="f_flow" value="&lt;b&gt;Workflow Builder&lt;/b&gt; — src/components/flow/&lt;br&gt;@xyflow/react canvas · Zustand store&lt;br&gt;renders forms from the backend&lt;br&gt;&lt;b&gt;NodeSpec&lt;/b&gt; catalog (/node_types)&lt;br&gt;no hand-written component per node type" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="t3">
+          <mxGeometry x="510" y="54" width="320" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="f_client" value="&lt;b&gt;Generated API Client&lt;/b&gt;&lt;br&gt;src/client/ — generated from the&lt;br&gt;backend OpenAPI spec, never hand-edited&lt;br&gt;&lt;i&gt;npm run generate-client&lt;/i&gt;&lt;br&gt;resolves { data, error } (no throw)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="t3">
+          <mxGeometry x="950" y="54" width="280" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="f_auth" value="&lt;b&gt;Auth&lt;/b&gt; — src/lib/auth/&lt;br&gt;pluggable provider resolved from&lt;br&gt;the backend health endpoint:&lt;br&gt;&lt;b&gt;local&lt;/b&gt; (OSS JWT) or &lt;b&gt;Stack Auth&lt;/b&gt;&lt;br&gt;Bearer interceptor registered post-load" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="t3">
+          <mxGeometry x="1350" y="54" width="300" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="f_embed" value="&lt;b&gt;Embed &amp; Public Surfaces&lt;/b&gt;&lt;br&gt;widget bundle · public agent page&lt;br&gt;text-chat channel&lt;br&gt;talks to the unauthenticated&lt;br&gt;public_* routers" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="t3">
+          <mxGeometry x="1750" y="54" width="300" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="t4" value="API Surface — api/routes/  (thin handlers, aggregated in main.py, mounted at /api/v1)" style="swimlane;startSize=36;html=1;whiteSpace=wrap;fillColor=#fcfcfc;strokeColor=#9e9e9e;fontStyle=1;fontSize=15;align=left;spacingLeft=16;pointerEvents=0;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="160" y="800" width="2160" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="r_workflow" value="&lt;b&gt;workflow&lt;/b&gt;&lt;br&gt;workflow_embed&lt;br&gt;workflow_recording&lt;br&gt;workflow_text_chat&lt;br&gt;node_types" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="t4">
+          <mxGeometry x="60" y="52" width="250" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="r_campaign" value="&lt;b&gt;campaign&lt;/b&gt;&lt;br&gt;organization&lt;br&gt;organization_usage&lt;br&gt;user · credentials&lt;br&gt;service_keys · reports" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="t4">
+          <mxGeometry x="335" y="52" width="230" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="r_kb" value="&lt;b&gt;knowledge_base&lt;/b&gt;&lt;br&gt;tool · folder&lt;br&gt;s3_signed_url&lt;br&gt;agent_stream (SSE)&lt;br&gt;superuser" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="t4">
+          <mxGeometry x="590" y="52" width="225" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="r_public" value="&lt;b&gt;public_*&lt;/b&gt; &lt;i&gt;(unauthenticated)&lt;/i&gt;&lt;br&gt;public_agent&lt;br&gt;public_embed&lt;br&gt;public_embed_chat&lt;br&gt;&lt;i&gt;must derive + validate org id&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="t4">
+          <mxGeometry x="840" y="52" width="245" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="r_webrtc" value="&lt;b&gt;webrtc_signaling&lt;/b&gt;&lt;br&gt;turn_credentials&lt;br&gt;auth&lt;br&gt;&lt;i&gt;WS deps: get_user_ws&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="t4">
+          <mxGeometry x="1110" y="52" width="235" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="r_telephony" value="&lt;b&gt;telephony.py&lt;/b&gt;&lt;br&gt;auto-mounts each provider's&lt;br&gt;routes.py (ari is transport-only)&lt;br&gt;webhooks · media WS · transfers&lt;br&gt;&lt;i&gt;never added to main.py by hand&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="t4">
+          <mxGeometry x="1370" y="52" width="300" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="r_ops" value="&lt;b&gt;main.py ops&lt;/b&gt; &lt;i&gt;(X-Dograh-Devops-Secret)&lt;/i&gt;&lt;br&gt;/health&lt;br&gt;/health/active-calls → drain signal&lt;br&gt;/health/autoscale-metric → KEDA&lt;br&gt;&lt;i&gt;503 on Redis failure, never 0&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="t4">
+          <mxGeometry x="1695" y="52" width="250" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="r_mcp" value="&lt;b&gt;mcp_server/&lt;/b&gt;&lt;br&gt;MCP surface&lt;br&gt;exposed by the&lt;br&gt;backend" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="t4">
+          <mxGeometry x="1970" y="52" width="150" height="105" as="geometry" />
+        </mxCell>
+
+        <mxCell id="t5" value="Domain Services — api/services/  (all orchestration and business rules; org-scoped)" style="swimlane;startSize=36;html=1;whiteSpace=wrap;fillColor=#fcfcfc;strokeColor=#9e9e9e;fontStyle=1;fontSize=15;align=left;spacingLeft=16;pointerEvents=0;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="160" y="1050" width="2160" height="380" as="geometry" />
+        </mxCell>
+        <mxCell id="s_workflow" value="&lt;b&gt;workflow/&lt;/b&gt; — the agent graph&lt;br&gt;WorkflowGraph (acyclicity, unique transition&lt;br&gt;tool names, {{ variable }} extraction) · dto.py&lt;br&gt;node_specs/ registry · &lt;b&gt;pipecat_engine&lt;/b&gt; (node&lt;br&gt;transitions, LLM context, summarization)&lt;br&gt;tools/ (calculator, KB, MCP, HTTP, transfer) · qa/" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="t5">
+          <mxGeometry x="60" y="70" width="360" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="s_pipecat" value="&lt;b&gt;pipecat/&lt;/b&gt; — live call runtime&lt;br&gt;run_pipeline_telephony / _smallwebrtc&lt;br&gt;pipeline_builder: cascaded &lt;b&gt;STT→LLM→TTS&lt;/b&gt;&lt;br&gt;or realtime speech-to-speech&lt;br&gt;service_factory · transport_setup · realtime/&lt;br&gt;&lt;i&gt;every call registers + unregisters in finally&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="t5">
+          <mxGeometry x="450" y="70" width="360" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="s_config" value="&lt;b&gt;configuration/&lt;/b&gt;&lt;br&gt;per-org provider credentials&lt;br&gt;and model selection&lt;br&gt;dograh-managed or BYOK&lt;br&gt;defaults: Deepgram / OpenAI / ElevenLabs&lt;br&gt;&lt;i&gt;never env vars for per-org settings&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="t5">
+          <mxGeometry x="840" y="70" width="300" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="s_telephony" value="&lt;b&gt;telephony/&lt;/b&gt;&lt;br&gt;registry (ProviderSpec + UI metadata)&lt;br&gt;&lt;b&gt;factory&lt;/b&gt; — the only way to get a provider&lt;br&gt;ws_auth · status_processor · ari_manager&lt;br&gt;call_transfer_manager · external_pbx&lt;br&gt;&lt;i&gt;branch on capabilities, never on name&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="t5">
+          <mxGeometry x="1170" y="70" width="350" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="s_integr" value="&lt;b&gt;integrations/&lt;/b&gt;&lt;br&gt;registry + loader&lt;br&gt;paygent · tuner&lt;br&gt;contribute their own&lt;br&gt;node specs and routers" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="t5">
+          <mxGeometry x="1550" y="70" width="270" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="s_auth" value="&lt;b&gt;auth/&lt;/b&gt;&lt;br&gt;depends.py: get_user&lt;br&gt;get_user_with_selected_organization&lt;br&gt;get_user_ws · get_superuser&lt;br&gt;&lt;i&gt;tenant isolation entry point&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="t5">
+          <mxGeometry x="1850" y="70" width="270" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="s_gen" value="&lt;b&gt;gen_ai/ · quota_service&lt;/b&gt;&lt;br&gt;storage · reports&lt;br&gt;gender · voice_prompting_guide&lt;br&gt;tool_management&lt;br&gt;organization_context / _preferences" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="t5">
+          <mxGeometry x="60" y="230" width="320" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="s_mps" value="&lt;b&gt;managed_model_services&lt;/b&gt;&lt;br&gt;mps_service_key_client&lt;br&gt;mps_billing&lt;br&gt;workflow_run_billing&lt;br&gt;workflow_run_artifacts / _failure" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="t5">
+          <mxGeometry x="410" y="230" width="310" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="s_camp" value="&lt;b&gt;campaign/&lt;/b&gt;&lt;br&gt;source sync&lt;br&gt;batch dialing&lt;br&gt;run creation +&lt;br&gt;configuration policy" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="t5">
+          <mxGeometry x="750" y="230" width="290" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="s_sync" value="&lt;b&gt;worker_sync/&lt;/b&gt; — WorkerSyncManager&lt;br&gt;an endpoint that mutates in-memory state&lt;br&gt;only changes &lt;i&gt;its own&lt;/i&gt; uvicorn worker,&lt;br&gt;so changes propagate to the whole fleet&lt;br&gt;over &lt;b&gt;Redis pub/sub&lt;/b&gt; instead" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="t5">
+          <mxGeometry x="1070" y="230" width="340" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="s_conc" value="&lt;b&gt;call_concurrency/&lt;/b&gt;&lt;br&gt;fleet-wide concurrent-call&lt;br&gt;accounting in Redis&lt;br&gt;feeds the autoscale metric&lt;br&gt;and per-org quota caps" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="t5">
+          <mxGeometry x="1440" y="230" width="320" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="s_obs" value="&lt;b&gt;observability/&lt;/b&gt;&lt;br&gt;active_calls — per-worker registration&lt;br&gt;that gates deploy drain (SIGTERM waits&lt;br&gt;for zero); a leak blocks deploys&lt;br&gt;loop_lag · Langfuse tracing · PostHog" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="t5">
+          <mxGeometry x="1790" y="230" width="330" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="t6" value="Persistence Layer &amp; Background Jobs" style="swimlane;startSize=36;html=1;whiteSpace=wrap;fillColor=#fcfcfc;strokeColor=#9e9e9e;fontStyle=1;fontSize=15;align=left;spacingLeft=16;pointerEvents=0;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="160" y="1500" width="2160" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="d_client" value="&lt;b&gt;api/db/&lt;/b&gt; — the only persistence path&lt;br&gt;&lt;b&gt;DBClient&lt;/b&gt; composes ~23 per-domain mixins into one&lt;br&gt;process-wide singleton (&lt;i&gt;from api.db import db_client&lt;/i&gt;)&lt;br&gt;models.py · filters.py · base_client.py (live engine)&lt;br&gt;&lt;b&gt;org-scoped queries filter in SQL, never in Python&lt;/b&gt;&lt;br&gt;alembic/versions/ for migrations" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="t6">
+          <mxGeometry x="80" y="54" width="480" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="w_arq" value="&lt;b&gt;ARQ worker&lt;/b&gt;&lt;br&gt;api/tasks/arq.py&lt;br&gt;WorkerSettings.functions&lt;br&gt;+ cron schedule&lt;br&gt;&lt;i&gt;separate process from uvicorn&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="t6">
+          <mxGeometry x="640" y="54" width="380" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="t_tasks" value="&lt;b&gt;api/tasks/&lt;/b&gt;&lt;br&gt;run_integrations_post_workflow_run · process_workflow_completion&lt;br&gt;sync_campaign_source · process_campaign_batch&lt;br&gt;process_knowledge_base_document&lt;br&gt;deliver_webhook + cron sweep_webhook_deliveries" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="t6">
+          <mxGeometry x="1100" y="54" width="540" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="t_art" value="&lt;b&gt;Post-call artifacts&lt;/b&gt;&lt;br&gt;recordings + transcripts&lt;br&gt;QA analysis · node summaries&lt;br&gt;run metrics and billing&lt;br&gt;(services/workflow/qa/)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="t6">
+          <mxGeometry x="1720" y="54" width="400" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="t7" value="Data Stores" style="swimlane;startSize=36;html=1;whiteSpace=wrap;fillColor=#fcfcfc;strokeColor=#9e9e9e;fontStyle=1;fontSize=15;align=left;spacingLeft=16;pointerEvents=0;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="160" y="1760" width="2160" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="db_pg" value="&lt;b&gt;PostgreSQL 17&lt;/b&gt;&lt;br&gt;pgvector/pgvector:pg17&lt;br&gt;asyncpg + SQLAlchemy&lt;br&gt;:5432" style="shape=cylinder3;boundedLbl=1;size=15;whiteSpace=wrap;html=1;fontSize=11;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="t7">
+          <mxGeometry x="240" y="50" width="300" height="115" as="geometry" />
+        </mxCell>
+        <mxCell id="db_redis" value="&lt;b&gt;Redis 7&lt;/b&gt;&lt;br&gt;ARQ job queue · pub/sub worker sync&lt;br&gt;call-concurrency counters&lt;br&gt;:6379" style="shape=cylinder3;boundedLbl=1;size=15;whiteSpace=wrap;html=1;fontSize=11;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="t7">
+          <mxGeometry x="930" y="50" width="300" height="115" as="geometry" />
+        </mxCell>
+        <mxCell id="db_minio" value="&lt;b&gt;MinIO&lt;/b&gt; (or AWS S3 / any S3-compatible)&lt;br&gt;bucket: voice-audio&lt;br&gt;recordings · KB documents · presigned URLs&lt;br&gt;:9000 — swap with ENABLE_AWS_S3=true" style="shape=cylinder3;boundedLbl=1;size=15;whiteSpace=wrap;html=1;fontSize=11;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="t7">
+          <mxGeometry x="1620" y="50" width="340" height="115" as="geometry" />
+        </mxCell>
+
+        <mxCell id="t8" value="External Services (third-party)" style="swimlane;startSize=36;html=1;whiteSpace=wrap;fillColor=#fcfcfc;strokeColor=#9e9e9e;fontStyle=1;fontSize=15;align=left;spacingLeft=16;pointerEvents=0;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="160" y="2020" width="2160" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="x_ai" value="AI Model Providers — chosen per organization in services/configuration/, instantiated by services/pipecat/service_factory.py" style="swimlane;startSize=30;html=1;whiteSpace=wrap;fillColor=#f0f0f0;strokeColor=#666666;fontStyle=2;fontSize=12;align=left;spacingLeft=12;collapsible=0;" vertex="1" parent="t8">
+          <mxGeometry x="60" y="50" width="1350" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="x_stt" value="&lt;b&gt;STT&lt;/b&gt;&lt;br&gt;Deepgram &lt;i&gt;(default)&lt;/i&gt; · Deepgram Flux&lt;br&gt;AssemblyAI · Cartesia · Cartesia Turns&lt;br&gt;ElevenLabs · Gladia · Google · Azure&lt;br&gt;OpenAI · HuggingFace · Dograh" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;dashed=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="x_ai">
+          <mxGeometry x="20" y="40" width="420" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="x_llm" value="&lt;b&gt;LLM&lt;/b&gt;&lt;br&gt;OpenAI &lt;i&gt;(default)&lt;/i&gt; · Google · Vertex AI&lt;br&gt;Groq · AWS Bedrock · Azure&lt;br&gt;OpenRouter · MiniMax&lt;br&gt;HuggingFace · Dograh" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;dashed=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="x_ai">
+          <mxGeometry x="460" y="40" width="420" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="x_tts" value="&lt;b&gt;TTS&lt;/b&gt;&lt;br&gt;ElevenLabs &lt;i&gt;(default)&lt;/i&gt; · Cartesia&lt;br&gt;Deepgram · Rime · LMNT · Inworld&lt;br&gt;Google · Azure · OpenAI&lt;br&gt;MiniMax · Dograh" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;dashed=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="x_ai">
+          <mxGeometry x="900" y="40" width="430" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="x_int" value="&lt;b&gt;Integration Targets&lt;/b&gt;&lt;br&gt;Paygent · Tuner&lt;br&gt;customer webhook endpoints&lt;br&gt;&lt;i&gt;user-configured URLs pass through&lt;/i&gt;&lt;br&gt;&lt;i&gt;validate_user_configured_service_url&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;dashed=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="t8">
+          <mxGeometry x="1450" y="60" width="300" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="x_obs" value="&lt;b&gt;Observability&lt;/b&gt;&lt;br&gt;Langfuse — LLM tracing&lt;br&gt;(per-org creds or global)&lt;br&gt;PostHog — product telemetry&lt;br&gt;ENABLE_TELEMETRY" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;dashed=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="t8">
+          <mxGeometry x="1790" y="60" width="330" height="140" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e1" value="PSTN / SIP" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="c_pstn" target="c_carrier">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="c_browser" target="e_nginx">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="WebRTC media&#xa;(relayed)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="c_embed" target="e_coturn">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="widget + signaling" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.15;exitY=1;exitDx=0;exitDy=0;entryX=0.85;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="c_embed" target="e_nginx">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="media WSS — capability token in URL path" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="c_carrier" target="e_wsauth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="webhooks (no public IP)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.15;exitY=1;exitDx=0;exitDy=0;entryX=0.8;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="c_carrier" target="e_tunnel">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="proxy → ui:3010" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="e_nginx" target="f_app">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="SSR fetch" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.4;exitY=1;exitDx=0;exitDy=0;entryX=0.6;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="f_app" target="r_workflow">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" value="REST /api/v1 · Bearer token (all domain routers)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.15;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="f_client" target="r_workflow">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1194" y="775" />
+              <mxPoint x="257" y="775" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" value="signed webhook callbacks" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.15;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="e_tunnel" target="r_telephony">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1250" y="500" />
+              <mxPoint x="1450" y="500" />
+              <mxPoint x="1450" y="790" />
+              <mxPoint x="1575" y="790" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" value="verified media WS" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.85;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="e_wsauth" target="r_telephony">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1860" y="790" />
+              <mxPoint x="1785" y="790" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" value="graph CRUD · node specs · runs" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.35;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="r_workflow" target="s_workflow">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" value="resolve provider&#xa;(factory)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.4;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="r_telephony" target="s_telephony">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" value="run_pipeline_smallwebrtc" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.85;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="r_webrtc" target="s_pipecat">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1340" y="1030" />
+              <mxPoint x="916" y="1030" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e15" value="active calls · loop lag" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.56;exitY=1;exitDx=0;exitDy=0;entryX=0.14;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="r_ops" target="s_obs">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1995" y="1260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e16" value="provider creds + model" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_config" target="s_pipecat">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="70" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e17" value="drives pipecat_engine" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_pipecat" target="s_workflow">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-72" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e18" value="transport + serializer" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.2;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_telephony" target="s_pipecat">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1400" y="1103" />
+              <mxPoint x="880" y="1103" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e19" value="enqueue campaign batches" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.68;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_camp" target="w_arq">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e20" value="enqueue post-call jobs" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.79;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_pipecat" target="w_arq">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="894" y="1450" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e21" value="runs" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="w_arq" target="t_tasks">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e22" value="produce" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="t_tasks" target="t_art">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e23" value="db_client&#xa;(org-scoped)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0;exitY=0.6;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_workflow" target="d_client">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="120" y="1192" />
+              <mxPoint x="120" y="1609" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e24" value="SQLAlchemy async" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.55;exitY=1;exitDx=0;exitDy=0;entryX=0.4;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d_client" target="db_pg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e25" value="ARQ queue" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.15;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="w_arq" target="db_redis">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e26" value="pub/sub worker sync" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.03;exitY=1;exitDx=0;exitDy=0;entryX=0.43;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_sync" target="db_redis">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1220" y="1450" />
+              <mxPoint x="1220" y="1780" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e27" value="recordings · artifacts" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.6;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t_art" target="db_minio">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e28" value="post-run integration dispatch&#xa;+ webhook delivery" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.81;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t_tasks" target="x_int">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1697" y="1870" />
+              <mxPoint x="1700" y="1870" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e29" value="traces · telemetry" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.95;exitY=1;exitDx=0;exitDy=0;entryX=0.95;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_obs" target="x_obs">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2300" y="1460" />
+              <mxPoint x="2300" y="2050" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e30" value="streaming STT / LLM / TTS&#xa;(WebSocket + HTTP)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_pipecat" target="x_ai">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="646" y="1260" />
+              <mxPoint x="70" y="1260" />
+              <mxPoint x="70" y="2160" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e31" value="outbound dial · transfers&#xa;(provider REST API)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.9;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="r_telephony" target="c_carrier">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1800" y="770" />
+              <mxPoint x="2300" y="770" />
+              <mxPoint x="2300" y="204" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="legend" value="Legend" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#9e9e9e;verticalAlign=top;align=left;spacingLeft=16;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="160" y="2340" width="2160" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="lg1" value="" style="rounded=1;html=1;dashed=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="legend">
+          <mxGeometry x="20" y="50" width="30" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg1t" value="External actor / third party" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="legend">
+          <mxGeometry x="58" y="48" width="250" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="lg2" value="" style="rounded=1;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="legend">
+          <mxGeometry x="330" y="50" width="30" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg2t" value="Edge / ingress / auth boundary" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="legend">
+          <mxGeometry x="368" y="48" width="250" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="lg3" value="" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="legend">
+          <mxGeometry x="640" y="50" width="30" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg3t" value="Frontend (ui/)" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="legend">
+          <mxGeometry x="678" y="48" width="200" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="lg4" value="" style="rounded=1;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="legend">
+          <mxGeometry x="900" y="50" width="30" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg4t" value="API surface (api/routes/)" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="legend">
+          <mxGeometry x="938" y="48" width="230" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="lg5" value="" style="rounded=1;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="legend">
+          <mxGeometry x="1190" y="50" width="30" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg5t" value="Domain services (api/services/)" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="legend">
+          <mxGeometry x="1228" y="48" width="260" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="lg6" value="" style="rounded=1;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="legend">
+          <mxGeometry x="1520" y="50" width="30" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg6t" value="Data access &amp; background jobs" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="legend">
+          <mxGeometry x="1558" y="48" width="250" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="lg7" value="" style="shape=cylinder3;boundedLbl=1;size=5;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="legend">
+          <mxGeometry x="1840" y="46" width="30" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="lg7t" value="Data store" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="legend">
+          <mxGeometry x="1878" y="48" width="200" height="22" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
