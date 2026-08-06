@@ -27,3 +27,7 @@ node_modules/
 .superpowers/
 docs/superpowers/
 .gstack/
+
+# Retell/vendor agent exports — contain live API credentials, never commit
+*Pristine Endodontics*.json
+retell-export-*.json
